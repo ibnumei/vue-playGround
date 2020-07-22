@@ -21,9 +21,11 @@ import router from './router'
 import './registerServiceWorker'
 import ArgonDashboard from './plugins/argon-dashboard'
 import BootstrapVue from 'bootstrap-vue'
-
+import SocketIO from 'socket.io-client'
+import VueSocketio from 'vue-socket.io-extended';
 
 Vue.config.productionTip = false
+Vue.use(VueSocketio, SocketIO('http://localhost:3000'));
 
 Vue.use(BootstrapVue)
 Vue.use(ArgonDashboard)

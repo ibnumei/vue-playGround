@@ -30,6 +30,7 @@
             {{selected}}
             <ChartLine :height="400" :options="options" :chartData="bigLineChart.chartData"></ChartLine>
             <!-- <button @click="fillData()">Randomize</button> -->
+            <button @click="submitDataSocket()">Send To Socket IO</button>
           </b-card>
         </div>
       </div>
@@ -39,6 +40,8 @@
 
 <script>
 import ChartLine from "./ChartLine.js";
+import axios from 'axios'
+
 export default {
   //   name: "live-chart",
   components: {
@@ -108,12 +111,11 @@ export default {
       let newTotal = this.bigLineChart.allData[indexData][0] + 10;
       console.log(newTotal);
       this.bigLineChart.allData[indexData][0] = newTotal;
-      console.log(this.bigLineChart.allData[indexData])
+      console.log(this.bigLineChart.allData[indexData]);
       this.initBarChart();
     },
     async initBarChart() {
       await this.selected;
-      console.log(this.selected);
       let labelChart = "";
       let indexData;
       let colorChart;
@@ -166,7 +168,31 @@ export default {
     },
     getRandomInt() {
       return Math.floor(Math.random() * (10 - 5 + 1)) + 2;
+    },
+    async submitDataSocket() {
+      // let data = {
+      //   total: 8
+      // }
+      const data = {test: 8}
+      // this.$socket.client.emit("sendChatMessage", valueData);
+      const { data: result } = await axios.post(`http://localhost:3000/vote`, data)
     }
+  },
+  sockets: {
+    // chatMessage: function(data) {
+    //   console.log("hasil chatMessage", data);
+    // }
+    vote: function(data) {
+      console.log("hasil chatMessage", data);
+    }
+  },
+  created() {
+    // this.$options.sockets.chatMessage = data => {
+    //   console.log("hasil created", data);
+    // };
+    this.$options.sockets.vote = data => {
+      console.log("hasil created", data);
+    };
   }
 };
 </script>
