@@ -9,7 +9,7 @@
           <b-card class="mb-4">
             <b-table striped hover :items="items" :fields="fields">
               <template v-slot:actions="row">
-                <b-button size="sm" @click="info(row.item)" class="mr-1">Submit</b-button>
+                <b-button size="sm" @click="submitData(row.item)" class="mr-1">Submit</b-button>
               </template>
             </b-table>
           </b-card>
@@ -29,7 +29,6 @@
             </b-form-group>
             {{selected}}
             <ChartLine :height="400" :options="options" :chartData="bigLineChart.chartData"></ChartLine>
-            <!-- <button @click="fillData()">Randomize</button> -->
             <button @click="submitDataSocket()">Send To Socket IO</button>
           </b-card>
         </div>
@@ -43,10 +42,8 @@ import ChartLine from "./ChartLine.js";
 import axios from 'axios'
 
 export default {
-  //   name: "live-chart",
   components: {
     ChartLine
-    // List
   },
   data() {
     return {
@@ -61,10 +58,12 @@ export default {
           labels: []
         }
       },
-      selected: "RM",
+      selected: "Dickerson",
       optionsRadio: [
-        { text: "Total Data Pending di RM", value: "RM" },
-        { text: "Total Data Pending di ACM", value: "ACM" }
+        { text: 'Total Data di Dickerson', value: 'Dickerson' },
+        { text: 'Total Data di Larsen', value: 'Larsen' },
+        { text: 'Total Data di Geneva', value: 'Geneva' },
+        { text: 'Total Data di Jami', value: 'Jami' },
       ],
       options: {
         responsive: true,
@@ -93,11 +92,36 @@ export default {
         { data_id: 3, first_name: "Geneva" },
         { data_id: 4, first_name: "Jami" }
       ],
-      fields: ["data_id", "first_name", "actions"]
+      fields: ["data_id", "first_name", "actions"],
+      mainData: {
+        Dickerson: {
+          labelChart: 'Data di Dickerson',
+          indexData: 0,
+          colorChart: 'rgb(101, 189, 101)',
+          chartData: [21, 10, 10, 30, 15, 40, 20, 20],
+        },
+        Larsen: {
+          labelChart: 'Data di Larsen',
+          indexData: 0,
+          colorChart: 'rgb(191,169,89)',
+          chartData: [1, 15, 10, 30, 15, 40, 20, 20],
+        },
+        Geneva: {
+          labelChart: 'Data di Geneva',
+          indexData: 0,
+          colorChart: 'rgb(202,79,116)',
+          chartData: [15, 10, 10, 30, 15, 40, 20, 20],
+        },
+        Jami: {
+          labelChart: 'Data di Jami',
+          indexData: 0,
+          colorChart: 'rgb(44,184,227)',
+          chartData: [40, 20, 10, 30, 15, 40, 20, 20],
+        },
+      },
     };
   },
   mounted() {
-    // this.fillData();
     this.initBarChart();
   },
   methods: {
@@ -109,37 +133,24 @@ export default {
         indexData = 1;
       }
       let newTotal = this.bigLineChart.allData[indexData][0] + 10;
-      console.log(newTotal);
       this.bigLineChart.allData[indexData][0] = newTotal;
-      console.log(this.bigLineChart.allData[indexData]);
       this.initBarChart();
     },
     async initBarChart() {
       await this.selected;
-      let labelChart = "";
-      let indexData;
-      let colorChart;
-      if (this.selected === "RM") {
-        labelChart = "Data di RM";
-        indexData = 0;
-        colorChart = "rgb(101, 189, 101)";
-      } else {
-        labelChart = "Data di ACM";
-        indexData = 1;
-        colorChart = "rgb(49, 49, 199)";
-      }
-      let chartData = {
+      const resultMappingName = this.mainData[this.selected];
+      const chartData = {
         datasets: [
           {
-            label: labelChart,
-            data: this.bigLineChart.allData[indexData],
-            borderColor: colorChart
-          }
+            label: resultMappingName.labelChart,
+            data: resultMappingName.chartData,
+            borderColor: resultMappingName.colorChart,
+          },
         ],
-        labels: ["Jan", "Feb", "Mar", "April", "May", "Jun", "Jul", "Aug"]
+        labels: ['Jan', 'Feb', 'Mar', 'April', 'May', 'Jun', 'Jul', 'Aug'],
       };
       this.bigLineChart.chartData = chartData;
-      this.bigLineChart.activeIndex = indexData;
+      this.bigLineChart.activeIndex = resultMappingName.indexData;
     },
     fillData() {
       this.datacollection = {
@@ -169,29 +180,29 @@ export default {
     getRandomInt() {
       return Math.floor(Math.random() * (10 - 5 + 1)) + 2;
     },
-    async submitDataSocket() {
-      // let data = {
-      //   total: 8
-      // }
-      const data = {test: 8}
-      // this.$socket.client.emit("sendChatMessage", valueData);
-      const { data: result } = await axios.post(`http://localhost:3000/vote`, data)
-    }
+    async submitData(item) {
+      const data = {
+        owner: item.first_name,
+        id: item.data_id,
+      };
+      const { data: result } = await axios.post(
+        'http://localhost:3000/ground/applications',
+        data,
+      );
+      console.log(result);
+    },
   },
   sockets: {
-    // chatMessage: function(data) {
-    //   console.log("hasil chatMessage", data);
-    // }
-    vote: function(data) {
-      console.log("hasil chatMessage", data);
-    }
+    updateApplication(data) {
+      console.log('hasil chatMessage', data);
+    },
+    connected(data) {
+      console.log(data);
+    },
   },
   created() {
-    // this.$options.sockets.chatMessage = data => {
-    //   console.log("hasil created", data);
-    // };
-    this.$options.sockets.vote = data => {
-      console.log("hasil created", data);
+    this.$options.sockets.vote = (data) => {
+      console.log('hasil created', data);
     };
   }
 };
