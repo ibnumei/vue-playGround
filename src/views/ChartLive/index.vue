@@ -185,16 +185,27 @@ export default {
         owner: item.first_name,
         id: item.data_id,
       };
-      const { data: result } = await axios.post(
+      await axios.post(
         'http://localhost:3000/ground/applications',
         data,
       );
-      console.log(result);
     },
   },
   sockets: {
     updateApplication(data) {
-      console.log('hasil chatMessage', data);
+      const resultMappingName = this.mainData[data.owner];
+      const chartData = {
+        datasets: [
+          {
+            label: resultMappingName.labelChart,
+            data: data.dataChart,
+            borderColor: resultMappingName.colorChart,
+          },
+        ],
+        labels: ['Jan', 'Feb', 'Mar', 'April', 'May', 'Jun', 'Jul', 'Aug'],
+      };
+      this.bigLineChart.chartData = chartData;
+      this.bigLineChart.activeIndex = resultMappingName.indexData;
     },
     connected(data) {
       console.log(data);
