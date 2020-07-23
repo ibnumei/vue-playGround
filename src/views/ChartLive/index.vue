@@ -4,7 +4,7 @@
 
     <div class="container-fluid mt--7">
       <div class="row">
-        <div class="col">
+        <div class="col-12">
           <!-- for table list -->
           <b-card class="mb-4">
             <b-table striped hover :items="items" :fields="fields">
@@ -13,7 +13,11 @@
               </template>
             </b-table>
           </b-card>
+        </div>
+      </div>
 
+      <div class="row">
+        <div class="col-xl-8">
           <b-card>
             <b-form-group label>
               <b-form-radio-group
@@ -29,7 +33,12 @@
             </b-form-group>
             {{selected}}
             <ChartLine :height="400" :options="options" :chartData="bigLineChart.chartData"></ChartLine>
-            <button @click="submitDataSocket()">Send To Socket IO</button>
+          </b-card>
+        </div>
+
+        <div class="col-xl-4">
+          <b-card>
+            <ChartBar :height="500" :options="options" :chartData="bigBarChart.chartData"></ChartBar>
           </b-card>
         </div>
       </div>
@@ -39,19 +48,24 @@
 
 <script>
 import ChartLine from "./ChartLine.js";
-import axios from 'axios'
+import ChartBar from "./ChartBar.js";
+import axios from "axios";
 
 export default {
   components: {
-    ChartLine
+    ChartLine,
+    ChartBar
   },
   data() {
     return {
+      bigBarChart: {
+        activeIndex: 0,
+        chartData: {
+          datasets: [],
+          labels: []
+        }
+      },
       bigLineChart: {
-        allData: [
-          [0, 20, 10, 30, 15, 40, 20, 20],
-          [25, 20, 5, 25, 10, 30, 15, 40]
-        ],
         activeIndex: 0,
         chartData: {
           datasets: [],
@@ -60,10 +74,10 @@ export default {
       },
       selected: "Dickerson",
       optionsRadio: [
-        { text: 'Total Data di Dickerson', value: 'Dickerson' },
-        { text: 'Total Data di Larsen', value: 'Larsen' },
-        { text: 'Total Data di Geneva', value: 'Geneva' },
-        { text: 'Total Data di Jami', value: 'Jami' },
+        { text: "Total Data di Dickerson", value: "Dickerson" },
+        { text: "Total Data di Larsen", value: "Larsen" },
+        { text: "Total Data di Geneva", value: "Geneva" },
+        { text: "Total Data di Jami", value: "Jami" }
       ],
       options: {
         responsive: true,
@@ -95,62 +109,83 @@ export default {
       fields: ["data_id", "first_name", "actions"],
       mainData: {
         Dickerson: {
-          labelChart: 'Data di Dickerson',
+          labelChart: "Data di Dickerson",
           indexData: 0,
-          colorChart: 'rgb(101, 189, 101)',
+          colorChart: "rgb(101, 189, 101)",
           chartData: [21, 10, 10, 30, 15, 40, 20, 20],
+          barChartData: [5, 5, 5, 5],
+          indexDataBar: 0,
+          totalPerPerson: 5
         },
         Larsen: {
-          labelChart: 'Data di Larsen',
+          labelChart: "Data di Larsen",
           indexData: 0,
-          colorChart: 'rgb(191,169,89)',
+          colorChart: "rgb(191,169,89)",
           chartData: [1, 15, 10, 30, 15, 40, 20, 20],
+          barChartData: [5, 5, 5, 5],
+          indexDataBar: 1,
+          totalPerPerson: 5
         },
         Geneva: {
-          labelChart: 'Data di Geneva',
+          labelChart: "Data di Geneva",
           indexData: 0,
-          colorChart: 'rgb(202,79,116)',
+          colorChart: "rgb(202,79,116)",
           chartData: [15, 10, 10, 30, 15, 40, 20, 20],
+          barChartData: [5, 5, 5, 5],
+          indexDataBar: 2,
+          totalPerPerson: 5
         },
         Jami: {
-          labelChart: 'Data di Jami',
+          labelChart: "Data di Jami",
           indexData: 0,
-          colorChart: 'rgb(44,184,227)',
+          colorChart: "rgb(44,184,227)",
           chartData: [40, 20, 10, 30, 15, 40, 20, 20],
-        },
-      },
+          barChartData: [5, 5, 5, 5],
+          indexDataBar: 3,
+          totalPerPerson: 5
+        }
+      }
     };
   },
   mounted() {
     this.initBarChart();
   },
   methods: {
-    info(item) {
-      let indexData;
-      if (this.selected === "RM") {
-        indexData = 0;
-      } else {
-        indexData = 1;
-      }
-      let newTotal = this.bigLineChart.allData[indexData][0] + 10;
-      this.bigLineChart.allData[indexData][0] = newTotal;
-      this.initBarChart();
+    drawBarChart(resultMappingName, sumPerperson) {
+      let barChartData = [...resultMappingName.barChartData] 
+      barChartData[resultMappingName.indexDataBar] = sumPerperson
+      const chartDataBar = {
+        datasets: [
+          {
+            label: resultMappingName.labelChart,
+            data: barChartData,
+            borderColor: resultMappingName.colorChart
+          }
+        ],
+        labels: ["Dickerson", "Larsen", "Geneva", "Jami"]
+      };
+      this.bigBarChart.chartData = chartDataBar;
+      this.bigBarChart.activeIndex = resultMappingName.indexData;
+    },
+    drawLineChart(resultMappingName, data) {
+      const chartDataLine = {
+        datasets: [
+          {
+            label: resultMappingName.labelChart,
+            data: data,
+            borderColor: resultMappingName.colorChart
+          }
+        ],
+        labels: ["Jan", "Feb", "Mar", "April", "May", "Jun", "Jul", "Aug"]
+      };
+      this.bigLineChart.chartData = chartDataLine;
+      this.bigLineChart.activeIndex = resultMappingName.indexData;
     },
     async initBarChart() {
       await this.selected;
       const resultMappingName = this.mainData[this.selected];
-      const chartData = {
-        datasets: [
-          {
-            label: resultMappingName.labelChart,
-            data: resultMappingName.chartData,
-            borderColor: resultMappingName.colorChart,
-          },
-        ],
-        labels: ['Jan', 'Feb', 'Mar', 'April', 'May', 'Jun', 'Jul', 'Aug'],
-      };
-      this.bigLineChart.chartData = chartData;
-      this.bigLineChart.activeIndex = resultMappingName.indexData;
+      this.drawBarChart(resultMappingName, resultMappingName.totalPerPerson)
+      return this.drawLineChart(resultMappingName, resultMappingName.chartData);
     },
     fillData() {
       this.datacollection = {
@@ -183,37 +218,26 @@ export default {
     async submitData(item) {
       const data = {
         owner: item.first_name,
-        id: item.data_id,
+        id: item.data_id
       };
-      await axios.post(
-        'http://localhost:3000/ground/applications',
-        data,
-      );
-    },
+      await axios.post("http://localhost:3000/ground/applications", data);
+    }
   },
   sockets: {
     updateApplication(data) {
+      console.log(data);
+      this.selected = data.owner;
       const resultMappingName = this.mainData[data.owner];
-      const chartData = {
-        datasets: [
-          {
-            label: resultMappingName.labelChart,
-            data: data.dataChart,
-            borderColor: resultMappingName.colorChart,
-          },
-        ],
-        labels: ['Jan', 'Feb', 'Mar', 'April', 'May', 'Jun', 'Jul', 'Aug'],
-      };
-      this.bigLineChart.chartData = chartData;
-      this.bigLineChart.activeIndex = resultMappingName.indexData;
+      this.drawBarChart(resultMappingName, data.arrayTotal)
+      return this.drawLineChart(resultMappingName, data.resultArrayNumber);
     },
     connected(data) {
       console.log(data);
-    },
+    }
   },
   created() {
-    this.$options.sockets.vote = (data) => {
-      console.log('hasil created', data);
+    this.$options.sockets.vote = data => {
+      console.log("hasil created", data);
     };
   }
 };
